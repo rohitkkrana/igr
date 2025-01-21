@@ -1,0 +1,16 @@
+.range-thumb::-webkit-slider-thumb {
+    appearance: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 9999px;
+    background: #3b82f6; /* Blue */
+    cursor: pointer;
+  }
+  
+  .range-thumb::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 9999px;
+    background: #3b82f6; /* Blue */
+    cursor: pointer;
+  }
