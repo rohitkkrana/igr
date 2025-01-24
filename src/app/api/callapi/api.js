@@ -18,7 +18,7 @@ export async function getData(req) {
 
     // Parse the request body
     const body = await req.json(); // Extract request body
-    console.log(body);
+    console.log(body,"rohit");
 
     // Make API request with dynamic URI and method
     const response = await fetch(`${process.env.API_URL}${body.uri}`, {

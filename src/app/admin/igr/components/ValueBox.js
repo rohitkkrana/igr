@@ -1,18 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef, useCallback  } from 'react';
 
-const dummyData = [
-  'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix',
-  'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
-];
+
 
 const ValueBox = ({ title, val, setVal }) => {
   const [inputValue, setInputValue] = useState(val);
+  const [data,setData] = useState([])
   const [searchQuery, setSearchQuery] = useState('');
-  const modalId = `${title}-modal`;
+  const [modal,setModal] = useState(false);
+  const [loading,setLoading] = useState(false);
+  const modalRef = useRef(null);
 
   useEffect(() => {
     setInputValue(val); // Sync inputValue with val prop
   }, [val]);
+  
+  useEffect(() => {
+    if (modal && modalRef.current) {
+      modalRef.current.showModal(); // Open the modal
+    } else if (modalRef.current) {
+      modalRef.current.close(); // Close the modal
+    }
+  }, [modal]);
 
   const handleSelection = (selectedValue) => {
     setInputValue((prevValues) =>
@@ -22,9 +30,34 @@ const ValueBox = ({ title, val, setVal }) => {
     );
   };
 
+    const getdata = useCallback( async()=>{
+      
+      try{
+        setLoading(true);
+        const data = await fetch("/api/callapi",{
+          method:"POST",
+          body: JSON.stringify({method:"GET",uri:`/api/autocomplete/?field=${title.id}`,data:{}})
+        });
+        if(data.status !== 200)
+          return false;
+        const d = await data.json(); 
+          setData(d);        
+      }catch(e){
+        console.error("server error",e)
+      }finally {
+        setLoading(false);
+      }
+    },[])
+
+    useEffect(()=>{
+      if(modal ){
+        getdata();
+      }
+    },[modal,getdata])
+
   const handleSave = () => {
     setVal(inputValue);
-    document.getElementById(modalId)?.close();
+    setModal(false);
   };
 
   const handleRemove = (valueToRemove) => {
@@ -32,14 +65,14 @@ const ValueBox = ({ title, val, setVal }) => {
     setVal(updatedValues);
   };
 
-  const filteredCities = dummyData.filter((city) =>
+  const filteredCities = data.filter((city) =>
     city.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <div className="collapse collapse-arrow shadow-lg rounded border border-gray-300/[.33] bg-gray-400/[.22]">
-      <input type="checkbox" id={title} className="peer" />
-      <div className="collapse-title text-base font-semibold">{title}</div>
+      <input type="checkbox" id={title.id} className="peer" />
+      <div className="collapse-title text-base font-semibold">{title.name}</div>
       <div className="collapse-content peer-checked:block hidden">
         <div className="flex gap-2 flex-wrap">
           {val.length > 0 ? (
@@ -70,18 +103,19 @@ const ValueBox = ({ title, val, setVal }) => {
             className="btn btn-xs btn-info"
             onClick={() => {
               setInputValue(val);
-              document.getElementById(modalId)?.showModal();
+              setModal(true);
             }}
           >
-            Select {title}
+            Select {title.name}
           </button>
         </div>
       </div>
 
       {/* Modal */}
-      <dialog id={modalId} className="modal">
+     
+      <dialog className="modal" ref={modalRef} onClose={() => setModal(false)} >
         <div className="modal-box">
-          <h3 className="font-bold text-lg">Select your {title}</h3>
+          <h3 className="font-bold text-lg">Select your {title.name}</h3>
           <p className="py-4">Press ESC key or click outside to close</p>
 
           <input
@@ -93,7 +127,7 @@ const ValueBox = ({ title, val, setVal }) => {
           />
 
           <div className="flex flex-col gap-2 h-[40vh] overflow-auto">
-            {filteredCities.map((city, index) => (
+            { (loading)?<div className='flex items-center justify-items-center h-[40vh]'>loading...</div>:filteredCities.map((city, index) => (
               <label key={index} className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -107,11 +141,11 @@ const ValueBox = ({ title, val, setVal }) => {
           </div>
 
           <div className="flex justify-between pt-4">
-            <button className="btn btn-ghost" onClick={() => document.getElementById(modalId)?.close()}>
+            <button className="btn btn-ghost" onClick={() =>setModal(false)}>
               Cancel
             </button>
             <button className="btn btn-success text-white ml-2" onClick={handleSave}>
-              Save {title}
+              Save {title.name}
             </button>
           </div>
         </div>

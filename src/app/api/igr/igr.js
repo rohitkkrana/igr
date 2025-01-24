@@ -27,11 +27,17 @@ export async function getData(req) {
       );
     }
 
-    // Get page number from query params (defaults to 1 if not provided)
-    const page = req.nextUrl.searchParams.get('page') || '1';
+    // Get all search parameters from the request URL
+    const searchParams = new URLSearchParams(req.nextUrl.searchParams);
+
+    // Construct the full query string
+    const queryString = searchParams.toString(); 
+
+    // Append query string to the API URL
+    const apiUrlWithParams = `${apiUrl}/igr?${queryString}`;
 
     // Make API request with dynamic page number
-    const response = await fetch(`${apiUrl}/igr?page=${page}`, {
+    const response = await fetch( apiUrlWithParams, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

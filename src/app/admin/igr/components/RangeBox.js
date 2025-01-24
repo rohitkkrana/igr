@@ -41,9 +41,9 @@ const RangeBox = ({ title, sub = "", min, max, val, setVal }) => {
 
   return (
     <div className="collapse collapse-arrow shadow-lg rounded border border-gray-300/[.33]">
-      <input type="checkbox" id={title} className="peer" />
+      <input type="checkbox" id={title.id} className="peer" />
       <div className="collapse-title text-base font-semibold">
-        {title} {sub}
+        {title.name} {sub}
       </div>
       <div className="collapse-content peer-checked:block hidden">
         <div className="flex flex-col gap-2">
