@@ -43,5 +43,6 @@ export const config = {
     "/",              // Protect this specific page
     "/admin/:path*",  // Protect all paths under /admin
     "/api/protected", // Protect this API route
+    "/dashboard/:path*",     // Protect this specific page
   ],
 };

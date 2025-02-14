@@ -19,7 +19,7 @@ const config= {
   ],
 
   daisyui: {
-    themes: ["synthwave", "cupcake"],
+    themes: ["winter", "cupcake",'corporate'],
   }
 };
 export default config

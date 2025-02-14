@@ -41,7 +41,7 @@ const LoginPage = () => {
         email,
         password,
         redirect: true,
-        callbackUrl: "/admin/igr",
+        callbackUrl: "/dashboard",
       });
 
       console.log(res, { email, password });
