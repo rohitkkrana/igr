@@ -1,5 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
+import pool from "@/lib/db";
+import { getUserPermissions } from "@/lib/permissions";
 
 export const authOptions = {
     secret: process.env.NEXTAUTH_SECRET,
@@ -14,34 +17,43 @@ export const authOptions = {
                 if (!credentials?.email || !credentials?.password) {
                     throw new Error("Missing email or password");
                 }
-
+              
                 try {
-                    const res = await fetch(`${process.env.API_URL}/api/login/`, {
-                        method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            "Authorization": "Basic YWRtaW46YWRtaW4=" 
-                        },
-                        body: JSON.stringify({
-                            email: credentials.email,
-                            password: credentials.password
-                        }),
-                    });
+                    // Get user from database with role
+                    const [users] = await pool.query(`
+                        SELECT u.*, r.name as role_name
+                        FROM users u
+                        JOIN roles r ON u.role_id = r.id
+                        WHERE u.email = ?
+                    `, [credentials.email]);
 
-                    if (!res.ok) {
+                    if (users.length === 0) {
                         throw new Error("Invalid credentials");
                     }
 
-                    const user = await res.json();
+                    const user = users[0];
 
-                    if (user?.access && user?.refresh) {
-                        return {
-                            accessToken: user.access,
-                            refreshToken: user.refresh,
-                        };
+                    // Verify password
+                    const isValid = await bcrypt.compare(
+                        credentials.password,
+                        user.password
+                    );
+                    console.log(credentials,isValid);
+                    if (!isValid) {
+                        throw new Error("Invalid credentials");
                     }
-                    
-                    throw new Error("Invalid response from server");
+
+                    // Get user permissions
+                    const permissions = await getUserPermissions(user.id);
+
+                    // Return user data without password
+                    return {
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role_name,
+                        permissions: permissions
+                    };
                 } catch (error) {
                     console.error("Login error:", error.message);
                     throw new Error("Login failed. Please try again.");
@@ -61,8 +73,9 @@ export const authOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.accessToken = user.accessToken;
-                token.refreshToken = user.refreshToken;
+                token.id = user.id;
+                token.role = user.role;
+                token.permissions = user.permissions;
             }
             return token;
         },
@@ -70,8 +83,9 @@ export const authOptions = {
         async session({ session, token }) {
             session.user = {
                 ...session.user,
-                accessToken: token.accessToken,
-                refreshToken: token.refreshToken,
+                id: token.id,
+                role: token.role,
+                permissions: token.permissions
             };
             return session;
         },

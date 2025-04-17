@@ -1,0 +1,15 @@
+{
+    "mcp_servers": [
+        {
+            "name": "Maharashtra Data",
+            "type": "mysql",
+            "url": "http://localhost:8000",
+            "database": "maharastra_data",
+            "endpoints": {
+                "status": "/mcp/status",
+                "tables": "/mcp/tables",
+                "table": "/mcp/table/{table_name}"
+            }
+        }
+    ]
+}
